@@ -1,4 +1,4 @@
-package sources.hex;
+package hex;
 
 public class Plateau {
 	private final static int TAILLE_MAX = 26;
@@ -30,6 +30,8 @@ public class Plateau {
 				this.t[i][j]=Pion.get(c);
 			}
 		}
+		this.jActuel = Pion.Rond;
+		this.manche = 0;
 	}
 
 	public int taille() {
@@ -48,57 +50,98 @@ public class Plateau {
 		}
 		
 		this.manche++;
-		if(manche%2 == 0) {
+	}
+	
+	public void changementJoueur() {
+		if(manche%JOUEURS_MAX == 0) {
 			jActuel = Pion.Rond;
 		} else {
 			jActuel = Pion.Croix;
 		}
 	}
 	
-	public boolean bordPion(int x, int y) {
-		if(jActuel.equals(Pion.Rond)) {
-			return x == 0 || x == taille() - 1;
-		} else {
-			return y == 0 || y == taille() - 1;
-		}
+	public boolean bordRond(int x, int y) {
+		return (x >= 0 || x < taille()) 
+				&& y == taille() - 1
+				&& jActuel.equals(Pion.Rond);
+	}
+
+	public boolean bordCroix(int x, int y) {
+		return (y >= 0 || y < taille()) 
+				&& x == taille() - 1
+				&& jActuel.equals(Pion.Croix);
 	}
 	
-	public boolean direction() {
+	public boolean direction(boolean[][] visite, int x, int y) {
+		visite[x][y] = true;
 		
+		if(jActuel.equals(Pion.Rond)) {
+			if(bordRond(x,y)) {
+				return true;
+			}
+		} else {
+			if(bordCroix(x,y)) {
+				return true;
+			}
+		}
+		
+		if(estValide(x-1,y,jActuel) && !visite[x-1][y]) return direction(visite,x-1,y);
+		if(estValide(x-1,y+1,jActuel) && !visite[x-1][y+1]) return direction(visite,x-1,y+1);
+		if(estValide(x,y-1,jActuel) && !visite[x][y-1]) return direction(visite,x,y-1);
+		if(estValide(x,y+1,jActuel) && !visite[x][y+1]) return direction(visite,x,y+1);
+		if(estValide(x+1,y-1,jActuel) && !visite[x+1][y-1]) return direction(visite,x+1,y-1);
+		if(estValide(x+1,y,jActuel) && !visite[x+1][y]) return direction(visite,x+1,y);
+		
+		
+		return false;
 	}
 	
-	public Pion[][] tableauPion() {
-		Pion[][] tabP = new Pion[taille()][taille()];
+	public boolean[][] tableauVide() {
+		boolean[][] tabP = new boolean[taille()][taille()];
 		
 		for(int i = 0; i < taille(); i++) {
 			for(int j = 0; j < taille(); j++) {
-				if(t[i][j].equals(jActuel)) {
-					tabP[i][j] = jActuel;
-				} else  {
-					tabP[i][j] = Pion.Vide;
-				}
+				tabP[i][j] = false;
 			}
 		}
 		
 		return tabP;
 	}
 	
-	public int debut(Pion[][] pionJ) {
+	public boolean[][] debut() {
+		boolean[][] tab = tableauVide();
 		for(int i = 0; i < taille(); i++) {
 			if(jActuel.equals(Pion.Rond)) {
-				if(pionJ[i][0].equals(jActuel)) return i;
+				if(t[i][0].equals(jActuel)) {
+					tab[i][0] = true;
+				}
 			} else {
-				if(pionJ[0][i].equals(jActuel)) return i;
+				if(t[0][i].equals(jActuel)) {
+					tab[0][i] = true;
+				}
 			}
 		}
-		return -1;
+		
+		return tab;
 	}
 	
 	public boolean verifGagnant() {
-		Pion[][] pionJ = tableauPion();
+		boolean[][] visite = debut();
 		
-		
-		
+		for(int i = 0; i < taille(); i++) {
+			if(jActuel.equals(Pion.Rond)) {
+				if(visite[i][0] == true)
+					if(direction(visite,i, 0)) {
+						return true;
+					}
+			} else {
+				if(visite[0][i] == true)
+					if(direction(visite,0, i)){
+						return true;
+					}
+			}
+		}
+
 		return false;
 	}
 	
@@ -135,7 +178,9 @@ public class Plateau {
         return s;
     }
 
-
+	public Pion joueurActuel() {
+		return this.jActuel;
+	}
 
 
 }

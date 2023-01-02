@@ -1,4 +1,4 @@
-package sources.hex;
+package hex;
 
 public enum Pion {
 	Vide('.'),Croix('X'),Rond('O');
